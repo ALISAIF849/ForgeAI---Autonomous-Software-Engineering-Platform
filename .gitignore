@@ -1,0 +1,54 @@
+# --- Dependencies ---
+node_modules/
+.pnpm-store/
+__pycache__/
+*.pyc
+.venv/
+.uv-cache/
+
+# --- Build output ---
+.next/
+out/
+dist/
+build/
+.turbo/
+*.egg-info/
+
+# --- Env files (never commit real secrets — .env.example files ARE committed) ---
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+!.env.example
+
+# --- Test / coverage ---
+coverage/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+playwright-report/
+test-results/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# --- Editor / OS ---
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Alembic (generated local artifacts only — versioned migration files ARE committed) ---
+apps/api/alembic/versions/__pycache__/
+
+# --- Misc ---
+*.tsbuildinfo
+.eslintcache
+.dist/

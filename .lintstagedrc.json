@@ -1,0 +1,8 @@
+{
+  "apps/web/**/*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+  "packages/**/*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+  "**/*.{json,md,yml,yaml}": ["prettier --write --ignore-unknown"],
+  "apps/api/**/*.py": ["uv run ruff check --fix", "uv run ruff format"],
+  "apps/worker/**/*.py": ["uv run ruff check --fix", "uv run ruff format"],
+  "services/**/*.py": ["uv run ruff check --fix", "uv run ruff format"]
+}

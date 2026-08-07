@@ -1,0 +1,83 @@
+# Local development stack only — production deploys don't use this file at all,
+# each Railway service builds from its own Dockerfile independently. See
+# docs/engineering/07-docker-strategy.md. Env values below are dev-only, insecure
+# defaults (clearly not real secrets) — no OAuth/AI credentials needed yet since
+# Sprint 1 doesn't implement either.
+#
+# Ports below are the conventional defaults (5432/6379/8000/3000). If one is already
+# taken by something else on your machine, override it locally rather than editing
+# this file — e.g. a docker-compose.override.yml (gitignored) with just the
+# `ports:` block for the affected service. This stack was verified end-to-end
+# using exactly that pattern during Sprint 1 development, on a machine where all
+# four default ports happened to be in use by unrelated projects.
+name: forgeai
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: forgeai
+      POSTGRES_PASSWORD: forgeai
+      POSTGRES_DB: forgeai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forgeai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql+asyncpg://forgeai:forgeai@postgres:5432/forgeai
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: dev-insecure-change-me-32-bytes-min
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./services:/app/services
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_SSE_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_ENVIRONMENT: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+
+volumes:
+  postgres_data:

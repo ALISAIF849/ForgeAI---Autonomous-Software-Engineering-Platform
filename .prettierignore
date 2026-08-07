@@ -1,0 +1,11 @@
+.next/
+dist/
+build/
+node_modules/
+.turbo/
+coverage/
+pnpm-lock.yaml
+uv.lock
+services/
+apps/api/
+apps/worker/

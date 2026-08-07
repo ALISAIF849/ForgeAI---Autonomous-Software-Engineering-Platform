@@ -1,0 +1,15 @@
+{
+  "name": "@forgeai/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generated TypeScript client from apps/api's OpenAPI schema. Everything under src/generated/ is generated — never hand-edit it. Empty until apps/api exposes a real schema (docs/architecture/08-api-design.md §1).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "generate": "openapi-typescript http://localhost:8000/openapi.json -o src/generated/schema.d.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@forgeai/config": "workspace:*"
+  }
+}

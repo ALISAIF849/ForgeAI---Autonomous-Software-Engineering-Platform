@@ -1,0 +1,11 @@
+# Normalize line endings everywhere; Windows contributors keep CRLF on checkout
+# for native .bat/.ps1 scripts only.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+# Don't let generated/vendored files pollute diffs or language-detection stats
+pnpm-lock.yaml -diff linguist-generated=true
+uv.lock -diff linguist-generated=true
+docs/architecture/**/*.md linguist-documentation=true
+docs/engineering/**/*.md linguist-documentation=true

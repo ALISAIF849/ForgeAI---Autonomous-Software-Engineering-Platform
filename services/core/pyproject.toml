@@ -1,0 +1,22 @@
+[project]
+name = "forgeai-core"
+version = "0.1.0"
+description = "Domain entities, ORM models, DB session/base, and shared utilities used by every other service, apps/api, and apps/worker. No business logic beyond domain rules."
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0.36",
+    "asyncpg>=0.30.0",
+    "pydantic>=2.9.0",
+    "structlog>=24.4.0",
+]
+# structlog: configure_logging is genuinely shared between apps/api and
+# apps/worker (sub-sprint 2.9) — identical setup, not two processes that
+# happen to look similar — so it lives here once rather than duplicated,
+# same reasoning as RetryPolicy/TimeoutPolicy and the workflow status enums.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/forgeai_core"]

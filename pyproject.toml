@@ -1,0 +1,115 @@
+[project]
+name = "forgeai"
+version = "0.1.0"
+description = "ForgeAI — AI-native Software Engineering Workspace (monorepo root)"
+requires-python = ">=3.12"
+
+# uv workspace root. apps/web is a Turborepo/pnpm concern, not part of this workspace.
+# See docs/engineering/02-monorepo-strategy.md for why the repo runs two workspace
+# managers side by side instead of forcing one polyglot tool to own both.
+[tool.uv.workspace]
+members = [
+    "apps/api",
+    "apps/worker",
+    "services/core",
+    "services/workflow_engine",
+    "services/capability_registry",
+    "services/model_router",
+    "services/memory_engine",
+    "services/prompts",
+    "services/integrations",
+]
+
+# --- Ruff: linting AND formatting. Black is intentionally not used — see
+# docs/engineering/05-tooling-configuration.md for why running both is redundant. ---
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# docs/ is excluded because Ruff's formatter reaches into Python code fences inside
+# markdown by default — but the snippets in docs/architecture and docs/engineering are
+# illustrative signatures embedded in prose, not maintained source, and shouldn't be
+# reformatted as if they were (discovered by actually running `ruff format --check .`
+# against this scaffold, not assumed).
+extend-exclude = ["**/alembic/versions", "docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+
+[tool.ruff.lint.flake8-bugbear]
+# B008 ("no function calls in argument defaults") exists to catch the classic
+# mutable-default-arg footgun — but FastAPI's dependency-injection system is built
+# entirely on calling `Depends(...)` (and similar) in a default, and re-resolves it
+# per-request rather than sharing one evaluated-at-def-time object, so the footgun
+# B008 guards against doesn't apply here. Same reasoning covers require_org_role:
+# it returns a fresh closure per call, not a shared mutable object.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "forgeai_api.dependencies.rbac.require_org_role",
+    "forgeai_api.dependencies.rbac.require_project_role",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "forgeai_api",
+    "forgeai_worker",
+    "forgeai_core",
+    "forgeai_workflow_engine",
+    "forgeai_capability_registry",
+    "forgeai_model_router",
+    "forgeai_memory_engine",
+    "forgeai_prompts",
+    "forgeai_integrations",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# --- mypy: static type checking. Distinct concern from lint/format, kept as a
+# separate tool since Ruff does not type-check. ---
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/versions"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# importlib: test modules are resolved by their full file path, not inserted into
+# sys.path under their bare filename. Without this, running pytest across more than
+# one package at once (e.g. `pytest services/workflow_engine/tests
+# services/capability_registry/tests`) breaks the moment two packages' test suites
+# share a filename — which they do here (test_registry.py, test_definition.py,
+# test_loader.py are conventional names reused across every services/* package) —
+# with a real "import file mismatch" collection error, reproduced while running this
+# sprint's tests, not a hypothetical. The alternative fix (an __init__.py in every
+# tests/ directory) works too, but importlib mode is the currently-recommended
+# approach and needs no per-package boilerplate as more packages grow test suites.
+addopts = ["--import-mode=importlib"]
+# No global testpaths: this is a multi-package workspace, each package's tests are
+# colocated with it (apps/api/tests, apps/worker/tests, ...) — invoke pytest scoped
+# to the package you're testing (`uv run pytest apps/api/tests`), or all of them via
+# the root Makefile target once one exists. tests/e2e is the one exception, per
+# docs/engineering/01-repository-scaffolding.md §3.4.
+
+# Dev tooling shared across the whole uv workspace (PEP 735 dependency group) — installed
+# once into the shared .venv rather than duplicated per services/* member. `pydantic` is
+# here (not yet a real dependency of any service) only because mypy's plugin needs it
+# importable to load; it becomes a genuine services/core dependency once request/response
+# schemas land. `httpx` backs FastAPI's TestClient. `testcontainers` runs integration
+# tests against a real, ephemeral Postgres container — deliberately not SQLite, which
+# doesn't have JSONB/native UUID/RLS and would test a different database than production
+# (docs/engineering/09-testing-strategy.md §3).
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pydantic>=2.9.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "testcontainers[postgres]>=4.8.0",
+]

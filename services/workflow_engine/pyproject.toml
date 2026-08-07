@@ -1,0 +1,27 @@
+[project]
+name = "forgeai-workflow-engine"
+version = "0.1.0"
+description = "Layer 2 — generic, domain-agnostic workflow orchestration engine. NOT built on LangGraph and has no AI dependency, per Sprint 2's explicit brief (docs/architecture/03-workflow-engine.md's original LangGraph-based design is superseded for this sprint — see the Sprint 2 status report for the open question of whether LangGraph returns later for AI-driven stage execution specifically, or not at all)."
+requires-python = ">=3.12"
+dependencies = [
+    "forgeai-core",
+    "pydantic>=2.9.0",
+    "sqlalchemy>=2.0.36",
+]
+# sqlalchemy: the Executor/StateManager/Queue (sub-sprint 2.3) do real persistence,
+# reading/writing forgeai-core's ORM models directly via an injected AsyncSession —
+# not just importing types transitively through forgeai-core.
+#
+# No dependency on forgeai-memory-engine or any AI-adjacent package — the generic
+# engine doesn't touch project memory/context; that's a capability concern for a
+# later, AI-focused sprint to wire in.
+
+[tool.uv.sources]
+forgeai-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/forgeai_workflow_engine"]

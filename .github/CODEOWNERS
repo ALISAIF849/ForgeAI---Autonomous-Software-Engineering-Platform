@@ -1,0 +1,19 @@
+# CODEOWNERS — placeholder. Replace the handles below with real GitHub usernames/teams
+# before enabling required-review branch protection on `main` (Sprint 0 checklist item).
+# Format reference: https://docs.github.com/articles/about-code-owners
+
+# Default: any change not matched below
+*                                   @forgeai/founding-team
+
+# Architecture & engineering-standards docs — changes here should get a second look
+/docs/architecture/                @forgeai/founding-team
+/docs/engineering/                 @forgeai/founding-team
+/docs/adr/                         @forgeai/founding-team
+
+# Workflow Engine — highest-novelty component, per docs/architecture/14-risks-and-tradeoffs.md
+/services/workflow_engine/         @forgeai/founding-team
+
+# Security-sensitive surfaces
+/services/integrations/            @forgeai/founding-team
+/apps/api/src/forgeai_api/core/    @forgeai/founding-team
+/.github/                          @forgeai/founding-team
