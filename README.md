@@ -2,7 +2,7 @@
 
 An AI-native Software Engineering Workspace. Users manage structured **Engineering Workflows** — Gather Requirements, Generate Architecture, Plan Sprint, Implement Feature, Review Pull Request, Fix Bug, Deploy Application, Investigate Production Issue — instead of prompting a chatbot. See [docs/architecture/README.md](docs/architecture/README.md) for the full system design.
 
-> **Status:** pre-Sprint-1. This repository currently contains architecture documentation and engineering-foundation scaffolding only — no application code yet. See [docs/engineering/SPRINT_0_CHECKLIST.md](docs/engineering/SPRINT_0_CHECKLIST.md) for what remains before implementation starts.
+> **Status:** pre-Sprint-1. This repository currently contains architecture documentation and engineering-foundation scaffolding only — no application code yet. See [docs/engineering/SPRINT_0_CHECKLIST.md](docs/engineering/SPRINT_0_CHECKLIST.md) for what remains before the actual implentation starts.
 
 ## Stack
 
