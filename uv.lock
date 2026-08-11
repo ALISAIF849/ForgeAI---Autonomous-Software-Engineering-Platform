@@ -540,10 +540,14 @@ version = "0.1.0"
 source = { editable = "services/model_router" }
 dependencies = [
     { name = "forgeai-core" },
+    { name = "sqlalchemy" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "forgeai-core", editable = "services/core" }]
+requires-dist = [
+    { name = "forgeai-core", editable = "services/core" },
+    { name = "sqlalchemy", specifier = ">=2.0.36" },
+]
 
 [[package]]
 name = "forgeai-prompts"

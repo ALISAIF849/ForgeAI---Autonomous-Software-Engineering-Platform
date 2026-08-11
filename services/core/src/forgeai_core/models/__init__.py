@@ -4,6 +4,7 @@ somewhere. A model defined but missing from this file is invisible to migrations
 """
 
 from forgeai_core.models.audit_log import AuditLog
+from forgeai_core.models.model_profile import ModelProfileRecord
 from forgeai_core.models.notification import Notification
 from forgeai_core.models.oauth_account import OAuthAccount
 from forgeai_core.models.organization import Organization
@@ -11,6 +12,7 @@ from forgeai_core.models.organization_member import OrganizationMember
 from forgeai_core.models.project import Project
 from forgeai_core.models.project_member import ProjectMember
 from forgeai_core.models.session import UserSession
+from forgeai_core.models.usage_ledger_entry import UsageLedgerEntry
 from forgeai_core.models.user import User
 from forgeai_core.models.user_preference import UserPreference
 from forgeai_core.models.workflow import Workflow
@@ -28,12 +30,14 @@ from forgeai_core.models.workflow_version import WorkflowVersion
 
 __all__ = [
     "AuditLog",
+    "ModelProfileRecord",
     "Notification",
     "OAuthAccount",
     "Organization",
     "OrganizationMember",
     "Project",
     "ProjectMember",
+    "UsageLedgerEntry",
     "User",
     "UserPreference",
     "UserSession",

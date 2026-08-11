@@ -1,11 +1,15 @@
 [project]
 name = "forgeai-model-router"
 version = "0.1.0"
-description = "Layer 4 — routes capability calls to the right LLM, tracks cost/usage. See docs/architecture/06-model-router.md. No providers wired yet."
+description = "Layer 4 — routes completion calls to a model, tracks token usage/cost. See docs/architecture/06-model-router.md. Sub-sprint 3.1: in-process ModelRegistry + ModelRouter (retry/timeout/fallback-chain, reusing forgeai-core's RetryPolicy/TimeoutPolicy) + MockProvider. No DB persistence and no real provider (Gemini) wired in yet — that's 3.2+."
 requires-python = ">=3.12"
 dependencies = [
     "forgeai-core",
+    "sqlalchemy>=2.0.36",
 ]
+# sqlalchemy: persistence.py (sub-sprint 3.2) does real DB I/O — ModelProfileRepository
+# and UsageLedger read/write forgeai-core's ORM models directly via an injected
+# AsyncSession, same reasoning as forgeai-workflow-engine's own Executor.
 
 [tool.uv.sources]
 forgeai-core = { workspace = true }
