@@ -3,7 +3,9 @@ Base.metadata, which only knows about models that have actually been imported
 somewhere. A model defined but missing from this file is invisible to migrations.
 """
 
+from forgeai_core.models.architecture_decision import ArchitectureDecision
 from forgeai_core.models.audit_log import AuditLog
+from forgeai_core.models.memory_event import MemoryEvent
 from forgeai_core.models.model_profile import ModelProfileRecord
 from forgeai_core.models.notification import Notification
 from forgeai_core.models.oauth_account import OAuthAccount
@@ -29,7 +31,9 @@ from forgeai_core.models.workflow_template import WorkflowTemplate
 from forgeai_core.models.workflow_version import WorkflowVersion
 
 __all__ = [
+    "ArchitectureDecision",
     "AuditLog",
+    "MemoryEvent",
     "ModelProfileRecord",
     "Notification",
     "OAuthAccount",

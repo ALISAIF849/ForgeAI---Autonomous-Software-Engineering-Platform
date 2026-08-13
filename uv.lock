@@ -529,10 +529,14 @@ version = "0.1.0"
 source = { editable = "services/memory_engine" }
 dependencies = [
     { name = "forgeai-core" },
+    { name = "sqlalchemy" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "forgeai-core", editable = "services/core" }]
+requires-dist = [
+    { name = "forgeai-core", editable = "services/core" },
+    { name = "sqlalchemy", specifier = ">=2.0.36" },
+]
 
 [[package]]
 name = "forgeai-model-router"
@@ -553,6 +557,12 @@ requires-dist = [
 name = "forgeai-prompts"
 version = "0.1.0"
 source = { editable = "services/prompts" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2.9.0" }]
 
 [[package]]
 name = "forgeai-worker"

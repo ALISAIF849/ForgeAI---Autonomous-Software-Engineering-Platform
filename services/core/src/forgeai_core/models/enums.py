@@ -46,3 +46,15 @@ class DigestFrequency(enum.StrEnum):
     NEVER = "never"
     DAILY = "daily"
     WEEKLY = "weekly"
+
+
+class ArchitectureDecisionStatus(enum.StrEnum):
+    """Mirrors the standard ADR lifecycle (docs/architecture/05-memory-engine.md
+    §4) — superseding is an explicit new record pointing back at the old one
+    via `superseded_by_id`, never an in-place overwrite, so "why did we move
+    away from X" stays answerable from the data alone."""
+
+    PROPOSED = "proposed"
+    ACCEPTED = "accepted"
+    SUPERSEDED = "superseded"
+    REJECTED = "rejected"

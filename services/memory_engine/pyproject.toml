@@ -1,10 +1,11 @@
 [project]
 name = "forgeai-memory-engine"
 version = "0.1.0"
-description = "Layer 5 — structured, episodic, and semantic project memory. See docs/architecture/05-memory-engine.md. No storage/recall implementation yet."
+description = "Layer 5 — structured, episodic, and semantic project memory. See docs/architecture/05-memory-engine.md. Sub-sprint 4.1: structured memory (ArchitectureDecision, ADR-shaped) + episodic memory (MemoryEvent, append-only project activity log), both DB-backed from the start. Semantic memory (pgvector + embeddings) and get_context_bundle() are NOT implemented yet — they need a real embedding provider and a Postgres image with the pgvector extension, neither wired in yet."
 requires-python = ">=3.12"
 dependencies = [
     "forgeai-core",
+    "sqlalchemy>=2.0.36",
 ]
 
 [tool.uv.sources]
