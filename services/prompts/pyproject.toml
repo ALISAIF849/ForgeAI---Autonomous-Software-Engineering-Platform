@@ -1,9 +1,11 @@
 [project]
 name = "forgeai-prompts"
 version = "0.1.0"
-description = "Versioned prompt templates consumed by capability implementations, kept separate from capability logic so prompt wording changes are independently reviewable and diffable from behavior changes. See docs/engineering/01-repository-scaffolding.md §3 for why this exists as its own package. No templates yet."
+description = "Versioned prompt templates consumed by capability implementations, kept separate from capability logic so prompt wording changes are independently reviewable and diffable from behavior changes. See docs/engineering/01-repository-scaffolding.md §3 for why this exists as its own package. Sub-sprint 3.3: PromptTemplate (validated placeholder contract) + in-process PromptRegistry. No internal workspace dependencies by design — see versioning.py's docstring."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pydantic>=2.9.0",
+]
 
 [build-system]
 requires = ["hatchling"]
