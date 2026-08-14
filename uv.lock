@@ -10,6 +10,7 @@ resolution-markers = [
 [manifest]
 members = [
     "forgeai",
+    "forgeai-analytics",
     "forgeai-api",
     "forgeai-capability-registry",
     "forgeai-core",
@@ -456,6 +457,21 @@ dev = [
     { name = "ruff", specifier = ">=0.8.0" },
     { name = "testcontainers", extras = ["postgres"], specifier = ">=4.8.0" },
     { name = "types-jsonschema", specifier = ">=4.23.0" },
+]
+
+[[package]]
+name = "forgeai-analytics"
+version = "0.1.0"
+source = { editable = "services/analytics" }
+dependencies = [
+    { name = "forgeai-core" },
+    { name = "sqlalchemy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "forgeai-core", editable = "services/core" },
+    { name = "sqlalchemy", specifier = ">=2.0.36" },
 ]
 
 [[package]]

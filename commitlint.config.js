@@ -21,6 +21,7 @@ export default {
         "memory-engine",
         "prompts",
         "integrations",
+        "analytics",
         "docs",
         "ci",
         "deps",

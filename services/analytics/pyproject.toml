@@ -1,0 +1,25 @@
+[project]
+name = "forgeai-analytics"
+version = "0.1.0"
+description = "Layer — Engineering Intelligence: a metrics registry that reads existing execution/cost data and reports either a real, evidence-backed value or an explicit NOT_AVAILABLE. Never a source of truth for the underlying events (workflow executions, usage ledger) it reads."
+requires-python = ">=3.12"
+dependencies = [
+    "forgeai-core",
+    "sqlalchemy>=2.0.36",
+]
+# sqlalchemy: every calculator queries forgeai-core's ORM models
+# (WorkflowExecution, WorkflowMetric, UsageLedgerEntry, ModelProfileRecord)
+# directly via an injected AsyncSession — this package computes metrics from
+# those tables, it does not duplicate them (Sprint 18 Stage 32's explicit
+# rule). No dependency on forgeai-workflow-engine or forgeai-model-router:
+# only their persisted ORM rows are read, not their in-process APIs.
+
+[tool.uv.sources]
+forgeai-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/forgeai_analytics"]
