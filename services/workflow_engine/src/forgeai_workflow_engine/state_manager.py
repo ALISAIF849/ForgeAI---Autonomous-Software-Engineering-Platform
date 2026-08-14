@@ -3,7 +3,14 @@ state_machine.py — every transition here goes through
 validate_workflow_transition/validate_stage_transition first (never a second,
 looser copy of the rules), and every successful transition also writes a
 WorkflowEvent row and publishes it to the EventBus (2.6): transitions ARE the
-events, not a separate thing to remember to emit.
+events, not a separate thing to remember to emit. A workflow reaching a
+terminal status is also where a WorkflowMetric row gets written (same
+principle applied to forgeai_core.models.workflow_metric.WorkflowMetric,
+which existed since sub-sprint 2.2 with a docstring promising "written once
+the execution reaches a terminal state" but nothing ever actually wrote one
+until now) — this is the one place every terminal transition already flows
+through, so it's the right choke point rather than a second thing callers
+must remember to do.
 """
 
 from __future__ import annotations
@@ -11,10 +18,13 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from forgeai_core.models.workflow_event import WorkflowEvent
 from forgeai_core.models.workflow_execution import WorkflowExecution
+from forgeai_core.models.workflow_metric import WorkflowMetric
+from forgeai_core.models.workflow_queue_entry import WorkflowQueueEntry
 from forgeai_core.models.workflow_stage_execution import WorkflowStageExecution
 from forgeai_core.workflow_enums import StageStatus, WorkflowStatus
 from forgeai_workflow_engine.event_bus import EventBus
@@ -72,8 +82,50 @@ class WorkflowStateManager:
         )
         self._db.add(event)
         await self._db.flush()
+        if target in _TERMINAL_WORKFLOW:
+            await self._record_metric(execution)
         await self._event_bus.publish(event)
         return execution
+
+    async def _record_metric(self, execution: WorkflowExecution) -> None:
+        stage_rows = (
+            await self._db.execute(
+                select(WorkflowStageExecution.status, WorkflowStageExecution.attempt_number).where(
+                    WorkflowStageExecution.workflow_execution_id == execution.id
+                )
+            )
+        ).all()
+        stages_completed = sum(1 for status, _ in stage_rows if status == StageStatus.COMPLETED)
+        stages_failed = sum(1 for status, _ in stage_rows if status == StageStatus.FAILED)
+        retries_total = sum(max(0, attempt - 1) for _, attempt in stage_rows)
+
+        first_queued_at = (
+            await self._db.execute(
+                select(func.min(WorkflowQueueEntry.created_at)).where(
+                    WorkflowQueueEntry.workflow_execution_id == execution.id
+                )
+            )
+        ).scalar_one_or_none()
+
+        total_duration_seconds = None
+        if execution.started_at is not None and execution.completed_at is not None:
+            total_duration_seconds = (execution.completed_at - execution.started_at).total_seconds()
+
+        queue_wait_seconds = None
+        if first_queued_at is not None and execution.started_at is not None:
+            queue_wait_seconds = (execution.started_at - first_queued_at).total_seconds()
+
+        self._db.add(
+            WorkflowMetric(
+                workflow_execution_id=execution.id,
+                total_duration_seconds=total_duration_seconds,
+                queue_wait_seconds=queue_wait_seconds,
+                stages_completed=stages_completed,
+                stages_failed=stages_failed,
+                retries_total=retries_total,
+            )
+        )
+        await self._db.flush()
 
     async def transition_stage(
         self,

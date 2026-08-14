@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from forgeai_core.models.workflow_event import WorkflowEvent
 from forgeai_core.models.workflow_execution import WorkflowExecution
+from forgeai_core.models.workflow_metric import WorkflowMetric
 from forgeai_core.workflow_enums import StageStatus, WorkflowStatus
 from forgeai_workflow_engine.definition import StageDefinition, WorkflowDefinition
 from forgeai_workflow_engine.exceptions import InvalidTransitionError
@@ -133,3 +134,152 @@ class TestWorkflowTransitionEvents:
         )
         assert len(events) == 1
         assert events[0].payload["new_status"] == "completed"
+
+
+class TestWorkflowMetricRecording:
+    """WorkflowMetric (forgeai_core.models.workflow_metric) has existed since
+    sub-sprint 2.2 with a docstring promising it's "written once the
+    execution reaches a terminal state" — nothing ever actually wrote one
+    until this transition_workflow() hook. These tests are what closes that
+    gap, not just documents the intended shape."""
+
+    async def test_a_completed_workflow_records_a_metric_row(
+        self, db: AsyncSession, seeded_project: tuple[uuid.UUID, uuid.UUID, uuid.UUID]
+    ) -> None:
+        _user_id, _org_id, project_id = seeded_project
+        execution = await _new_execution(db, project_id)
+        state = WorkflowStateManager(db)
+        executor = WorkflowExecutor(db, FakeStageRunner())
+        pairs = await executor.get_stage_executions(execution.id)
+        stage_execution_id = pairs[0][0].id
+
+        await state.transition_workflow(execution.id, WorkflowStatus.PENDING)
+        await state.transition_workflow(execution.id, WorkflowStatus.RUNNING)
+        await state.transition_stage(stage_execution_id, StageStatus.RUNNING)
+        await state.transition_stage(stage_execution_id, StageStatus.COMPLETED, output={})
+        await state.transition_workflow(execution.id, WorkflowStatus.COMPLETED)
+        await db.commit()
+
+        metric = (
+            await db.execute(
+                select(WorkflowMetric).where(WorkflowMetric.workflow_execution_id == execution.id)
+            )
+        ).scalar_one()
+
+        assert metric.stages_completed == 1
+        assert metric.stages_failed == 0
+        assert metric.retries_total == 0
+        assert metric.total_duration_seconds is not None
+        assert metric.total_duration_seconds >= 0
+        # No submit()/enqueue() happened in this test — nothing to compute a
+        # queue wait from, and that must stay a real NULL, not a fabricated 0.
+        assert metric.queue_wait_seconds is None
+
+    async def test_queue_wait_seconds_is_recorded_when_the_execution_went_through_the_queue(
+        self, db: AsyncSession, seeded_project: tuple[uuid.UUID, uuid.UUID, uuid.UUID]
+    ) -> None:
+        _user_id, _org_id, project_id = seeded_project
+        execution = await _new_execution(db, project_id)
+        executor = WorkflowExecutor(db, FakeStageRunner())
+        await executor.submit(execution.id)
+        await db.commit()
+        await executor.start(execution.id)
+        await db.commit()
+
+        state = WorkflowStateManager(db)
+        pairs = await executor.get_stage_executions(execution.id)
+        stage_execution_id = pairs[0][0].id
+        await state.transition_stage(stage_execution_id, StageStatus.RUNNING)
+        await state.transition_stage(stage_execution_id, StageStatus.COMPLETED, output={})
+        await state.transition_workflow(execution.id, WorkflowStatus.COMPLETED)
+        await db.commit()
+
+        metric = (
+            await db.execute(
+                select(WorkflowMetric).where(WorkflowMetric.workflow_execution_id == execution.id)
+            )
+        ).scalar_one()
+
+        assert metric.queue_wait_seconds is not None
+        assert metric.queue_wait_seconds >= 0
+
+    async def test_a_failed_workflow_records_its_failed_and_retried_stages(
+        self, db: AsyncSession, seeded_project: tuple[uuid.UUID, uuid.UUID, uuid.UUID]
+    ) -> None:
+        _user_id, _org_id, project_id = seeded_project
+        execution = await _new_execution(db, project_id)
+        state = WorkflowStateManager(db)
+        executor = WorkflowExecutor(db, FakeStageRunner())
+        pairs = await executor.get_stage_executions(execution.id)
+        stage_execution_id = pairs[0][0].id
+
+        await state.transition_workflow(execution.id, WorkflowStatus.PENDING)
+        await state.transition_workflow(execution.id, WorkflowStatus.RUNNING)
+        await state.transition_stage(stage_execution_id, StageStatus.RUNNING)
+        await state.transition_stage(stage_execution_id, StageStatus.RETRYING, error="boom")
+        await state.transition_stage(
+            stage_execution_id,
+            StageStatus.RUNNING,
+            attempt_number=2,
+            reset_started_at=True,
+            retry_after=None,
+        )
+        await state.transition_stage(stage_execution_id, StageStatus.FAILED, error="boom again")
+        await state.transition_workflow(
+            execution.id, WorkflowStatus.FAILED, error="stage failed permanently"
+        )
+        await db.commit()
+
+        metric = (
+            await db.execute(
+                select(WorkflowMetric).where(WorkflowMetric.workflow_execution_id == execution.id)
+            )
+        ).scalar_one()
+
+        assert metric.stages_completed == 0
+        assert metric.stages_failed == 1
+        assert metric.retries_total == 1
+
+    async def test_a_cancelled_workflow_also_records_a_metric_row(
+        self, db: AsyncSession, seeded_project: tuple[uuid.UUID, uuid.UUID, uuid.UUID]
+    ) -> None:
+        _user_id, _org_id, project_id = seeded_project
+        execution = await _new_execution(db, project_id)
+        state = WorkflowStateManager(db)
+
+        await state.transition_workflow(execution.id, WorkflowStatus.PENDING)
+        await state.transition_workflow(execution.id, WorkflowStatus.CANCELLED)
+        await db.commit()
+
+        metric = (
+            await db.execute(
+                select(WorkflowMetric).where(WorkflowMetric.workflow_execution_id == execution.id)
+            )
+        ).scalar_one()
+
+        assert metric.stages_completed == 0
+        assert metric.stages_failed == 0
+
+    async def test_a_non_terminal_transition_records_no_metric_row(
+        self, db: AsyncSession, seeded_project: tuple[uuid.UUID, uuid.UUID, uuid.UUID]
+    ) -> None:
+        _user_id, _org_id, project_id = seeded_project
+        execution = await _new_execution(db, project_id)
+        state = WorkflowStateManager(db)
+
+        await state.transition_workflow(execution.id, WorkflowStatus.PENDING)
+        await state.transition_workflow(execution.id, WorkflowStatus.RUNNING)
+        await db.commit()
+
+        metrics = (
+            (
+                await db.execute(
+                    select(WorkflowMetric).where(
+                        WorkflowMetric.workflow_execution_id == execution.id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert metrics == []
