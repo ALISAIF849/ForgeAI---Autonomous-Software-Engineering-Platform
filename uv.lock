@@ -537,10 +537,14 @@ version = "0.1.0"
 source = { editable = "services/integrations" }
 dependencies = [
     { name = "forgeai-core" },
+    { name = "httpx" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "forgeai-core", editable = "services/core" }]
+requires-dist = [
+    { name = "forgeai-core", editable = "services/core" },
+    { name = "httpx", specifier = ">=0.27.0" },
+]
 
 [[package]]
 name = "forgeai-memory-engine"
