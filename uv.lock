@@ -497,6 +497,7 @@ dependencies = [
     { name = "forgeai-core" },
     { name = "forgeai-model-router" },
     { name = "forgeai-prompts" },
+    { name = "forgeai-workflow-engine" },
     { name = "jsonschema" },
     { name = "pydantic" },
 ]
@@ -506,6 +507,7 @@ requires-dist = [
     { name = "forgeai-core", editable = "services/core" },
     { name = "forgeai-model-router", editable = "services/model_router" },
     { name = "forgeai-prompts", editable = "services/prompts" },
+    { name = "forgeai-workflow-engine", editable = "services/workflow_engine" },
     { name = "jsonschema", specifier = ">=4.23.0" },
     { name = "pydantic", specifier = ">=2.9.0" },
 ]

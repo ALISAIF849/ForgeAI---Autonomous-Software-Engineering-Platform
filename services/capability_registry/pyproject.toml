@@ -9,20 +9,27 @@ dependencies = [
     "forgeai-core",
     "forgeai-model-router",
     "forgeai-prompts",
+    "forgeai-workflow-engine",
 ]
-# jsonschema: the Executor (this sub-sprint) validates a capability's actual
+# jsonschema: the Executor (sub-sprint 3.6) validates a capability's actual
 # input/output against its declared input_schema/output_schema — a real JSON
 # Schema validator, not the definition-time shape sanity check definition.py
-# already does. forgeai-memory-engine is still not added: nothing here
-# imports it yet (no Context Builder wiring memory into CapabilityContext
-# yet) — same "don't declare speculatively" discipline as everywhere else in
-# this repo, now satisfied for model-router/prompts since the code below
-# actually imports them.
+# already does. forgeai-workflow-engine (this sub-sprint, 3.7): stage_runner.py
+# adapts workflow_engine's StageRunner plug point to CapabilityExecutor — a
+# one-directional dependency deliberately placed here rather than in
+# workflow_engine itself, since workflow_engine's own principle (see its
+# definition.py/runner.py docstrings) is that it must stay domain-agnostic
+# with no AI/capability dependency; capability_registry depending on its
+# plug-in ABC is the adapter relationship that respects that boundary.
+# forgeai-memory-engine is still not added: nothing here imports it yet (no
+# Context Builder wiring memory into CapabilityContext yet) — same "don't
+# declare speculatively" discipline as everywhere else in this repo.
 
 [tool.uv.sources]
 forgeai-core = { workspace = true }
 forgeai-model-router = { workspace = true }
 forgeai-prompts = { workspace = true }
+forgeai-workflow-engine = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
